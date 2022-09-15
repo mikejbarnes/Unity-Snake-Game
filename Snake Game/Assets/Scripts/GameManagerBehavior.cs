@@ -1,74 +1,79 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManagerBehavior : MonoBehaviour
 {
     public GameObject GraphicsManager;
+    public GameObject Model;
     
-    private GraphicsManagerBehavior graphicsScripts;
-    private Queue<int[]> _snake = new Queue<int[]>();
-    private int[] _foodPosition = new int[2];
-    private int[,] _gameGrid = new int[GameBoardParameters.XTiles, GameBoardParameters.YTiles];
+    private GraphicsManagerBehavior _graphicsScripts;
+    private ModelBehavior _modelScripts;
+    private int _xDirection = 1;
+    private int _yDirection = 0;
+    private float _timeElapsed;
+    private int _resultState;
 
-    // Start is called before the first frame update
-    void Awake()
+    void Start()
     {
-        graphicsScripts = GraphicsManager.GetComponent<GraphicsManagerBehavior>();
+        _graphicsScripts = GraphicsManager.GetComponent<GraphicsManagerBehavior>();
+        _modelScripts = Model.GetComponent<ModelBehavior>();
 
-        graphicsScripts.BuildWalls();
-        InitializeGameGrid();
-        SelectSnakeLocation();
-        SelectFoodLocation();
+        _graphicsScripts.RenderSnake(_modelScripts.Snake);
+        _graphicsScripts.RenderFood(_modelScripts.Food);
     }
 
-    // Update is called once per frame
     void FixedUpdate()
     {
-        
-    }
-    
-    private void InitializeGameGrid()
-    {
-        for(int i = 0; i < GameBoardParameters.XTiles; i++)
+        GetInput();
+
+        _timeElapsed += Time.deltaTime;
+
+        if (_timeElapsed >= GameBoardParameters.SecondsPerGameTic)
         {
-            for(int j = 0; j < GameBoardParameters.YTiles; j++)
+            _resultState = _modelScripts.OnUpdate(_xDirection, _yDirection);
+
+            switch (_resultState)
             {
-                if(i == 0 || i == GameBoardParameters.XTiles - 1 || j == 0 || j == GameBoardParameters.YTiles - 1)
-                {
-                    _gameGrid[i, j] = GridStates.Wall;   
-                }
+                case ResultStates.Grow:
+                    _graphicsScripts.GrowSnake();
+                    _graphicsScripts.RenderFood(_modelScripts.Food);
+                    break;
+                case ResultStates.Collision:
+                    SceneManager.LoadScene(2);
+                    break;
+                case ResultStates.Win:
+                    break;
             }
+
+            _graphicsScripts.RenderSnake(_modelScripts.Snake);
+
+            _timeElapsed -= GameBoardParameters.SecondsPerGameTic;
         }
-    }    
-
-    
-    
-    private void SelectSnakeLocation()
-    {
-        int snakeX = Mathf.FloorToInt(GameBoardParameters.XTiles / 2);
-        int snakeY = Mathf.FloorToInt(GameBoardParameters.YTiles / 2);
-        
-        _gameGrid[snakeX, snakeY] = GridStates.Snake;
-
-        int[] snakeXY = new int[] { snakeX, snakeY };
-        _snake.Enqueue(snakeXY);
     }
 
-    private void SelectFoodLocation()
+    private void GetInput()
     {
-        int foodX = 0;
-        int foodY = 0;
-
-        while (_gameGrid[foodX, foodY] != 0)
+        if (Input.GetKey(KeyCode.RightArrow))
         {
-            foodX = Random.Range(0, (int)GameBoardParameters.XTiles);
-            foodY = Random.Range(0, (int)GameBoardParameters.YTiles);
+            _xDirection = 1;
+            _yDirection = 0;
         }
-
-        _gameGrid[foodX, foodY] = GridStates.Food;
+        else if (Input.GetKey(KeyCode.LeftArrow))
+        {
+            _xDirection = -1;
+            _yDirection = 0;
+        }
+        else if (Input.GetKey(KeyCode.UpArrow))
+        {
+            _xDirection = 0;
+            _yDirection = 1;
+        }
+        else if (Input.GetKey(KeyCode.DownArrow))
+        {
+            _xDirection = 0;
+            _yDirection = -1;
+        }
     }
-
-
-
 }

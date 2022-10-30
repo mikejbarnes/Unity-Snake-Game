@@ -8,7 +8,7 @@ public class GameBoardParameters : MonoBehaviour
     public static int YTiles = 32;
     public static float TileSideLength = 0.278f;
     public static int SnakeInitialSegments = 5;
-    public static float SecondsPerGameTic = 0.05f;
+    public static float SecondsPerGameTic = 0.1f;
 
     public static float ConvertGridPositionToWorldSpace(int gridDimension)
     {
